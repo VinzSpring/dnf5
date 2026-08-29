@@ -75,6 +75,7 @@ class ConfigRepo::Impl {
     OptionChild<OptionNumber<std::uint32_t>> max_downloads_per_mirror{
         main_config.get_max_downloads_per_mirror_option()};
     OptionChild<OptionSeconds> metadata_expire{main_config.get_metadata_expire_option()};
+    OptionChild<OptionSeconds> uploaded_prior_to{main_config.get_uploaded_prior_to_option()};
     OptionNumber<std::int32_t> cost{1000};
     OptionNumber<std::int32_t> priority{99};
     OptionBool module_hotfixes{false};
@@ -166,6 +167,7 @@ ConfigRepo::Impl::Impl(Config & owner, ConfigMain & main_config, const std::stri
     owner.opt_binds().add("max_parallel_downloads", max_parallel_downloads);
     owner.opt_binds().add("max_downloads_per_mirror", max_downloads_per_mirror);
     owner.opt_binds().add("metadata_expire", metadata_expire);
+    owner.opt_binds().add("uploaded_prior_to", uploaded_prior_to);
     owner.opt_binds().add("cost", cost);
     owner.opt_binds().add("priority", priority);
     owner.opt_binds().add("module_hotfixes", module_hotfixes);
@@ -428,6 +430,13 @@ OptionChild<OptionSeconds> & ConfigRepo::get_metadata_expire_option() {
 }
 const OptionChild<OptionSeconds> & ConfigRepo::get_metadata_expire_option() const {
     return p_impl->metadata_expire;
+}
+
+OptionChild<OptionSeconds> & ConfigRepo::get_uploaded_prior_to_option() {
+    return p_impl->uploaded_prior_to;
+}
+const OptionChild<OptionSeconds> & ConfigRepo::get_uploaded_prior_to_option() const {
+    return p_impl->uploaded_prior_to;
 }
 
 OptionNumber<std::int32_t> & ConfigRepo::get_cost_option() {

@@ -74,6 +74,7 @@ static const std::unordered_set<std::string> ALLOWED_MAIN_CONF_OVERRIDES = {
     "skip_if_unavailable",
     "skip_unavailable",
     "strict",
+    "uploaded_prior_to",
 };
 
 void Session::setup_base() {

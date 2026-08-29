@@ -41,8 +41,8 @@ public:
     using OptionNumber<std::int32_t>::set;
 
     /// Parses input string and sets new value and priority.
-    /// Valid inputs: 100, 1.5m, 90s, 1.2d, 1d, 0xF, 0.1, -1, never.
-    /// Invalid inputs: -10, -0.1, 45.6Z, 1d6h, 1day, 1y.
+    /// Valid inputs: 100, 1.5m, 90s, 1.2d, 1d, 2w, 0xF, 0.1, -1, never, P7D, PT36H.
+    /// Invalid inputs: -10, -0.1, 45.6Z, 1d6h, 1day, 1y, P1M, P1Y.
     /// The value and priority are stored only if the new priority is equal to or higher than the stored priority.
     // @replaces libdnf:conf/OptionSeconds.hpp:method:OptionSeconds.set(Priority priority, const std::string & value)
     void set(Priority priority, const std::string & value) override;

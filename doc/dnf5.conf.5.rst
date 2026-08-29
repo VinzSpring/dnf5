@@ -1373,6 +1373,41 @@ configuration.
 
     Default: ``30``.
 
+.. _uploaded_prior_to_options-label:
+
+``uploaded_prior_to``
+    :ref:`time in seconds <time_in_seconds-label>`
+
+    Dependency cooldown. Packages that were built less than ``uploaded_prior_to`` ago
+    are hidden from all operations, including dependency resolution, as if they were
+    listed in :ref:`excludepkgs <excludepkgs_options-label>`.
+
+    The intent is to reduce the impact of supply chain attacks. Most malicious
+    packages are detected and removed from repositories shortly after being
+    published, so delaying their use gives maintainers and security researchers
+    time to react.
+
+    The value is a duration. DNF5 accepts the same forms as other
+    :ref:`time in seconds <time_in_seconds-label>` options (``14d``, ``2w``) and
+    ISO 8601 durations (``P14D``, ``P2W``, ``PT36H``, ``P1DT12H``). The age of a
+    package is its build time from repository metadata. Packages without a build
+    time, already installed packages, and local files given on the command line
+    are not affected.
+
+    Set in the main section the value applies to all repositories; individual
+    repositories can override it. Like ``excludepkgs``, the filter is skipped for
+    repositories listed in :ref:`disable_excludes <disable_excludes_options-label>`
+    (including ``*`` and ``main``).
+
+    Command-line option: :ref:`--uploaded-prior-to <uploaded_prior_to_option_ref-label>`
+
+    Default: ``0``, the cooldown is disabled.
+
+    .. WARNING::
+       A cooldown also delays security fixes from reaching the system. When using it,
+       pair it with a tool that notifies you about vulnerabilities, so that important
+       updates can be installed deliberately rather than being postponed unnoticed.
+
 .. _username_options-label:
 
 ``username``
@@ -1455,7 +1490,16 @@ Types of Options
 .. _time_in_seconds-label:
 
 ``time in seconds``
-    String representing time units in seconds. Can be set to ``-1`` or ``never``.
+    String representing a time period. Can be set to ``-1`` or ``never``.
+
+    A plain number is taken as seconds, optionally a single unit can be appended:
+    ``s`` (seconds), ``m`` (minutes), ``h`` (hours), ``d`` (days) or ``w`` (weeks).
+
+    ISO 8601 durations are accepted as well, for example ``P7D`` (7 days),
+    ``P2W`` (2 weeks), ``PT36H`` (36 hours) or ``P1DT12H30M``. Months and years
+    are not supported because they do not have a fixed length.
+
+    Examples: ``90``, ``1.5m``, ``48h``, ``14d``, ``2w``, ``P14D``, ``PT36H``.
 
 
 .. _drop_in_configuration_directories-label:

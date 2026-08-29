@@ -337,6 +337,17 @@ Following options are applicable in the general context for any ``dnf5`` command
     are appended to the original value, they do not override it. However, specifying an empty
     value (e.g. ``--setopt=tsflags=``) will clear the option.
 
+.. _uploaded_prior_to_option_ref-label:
+
+``--uploaded-prior-to=DURATION``
+    | Ignore packages that were built less than ``DURATION`` ago, e.g. ``14d``, ``2w``, ``P14D``.
+    | RPM metadata records build time rather than upload time; that is the timestamp used here.
+    | Overrides ``uploaded_prior_to`` for the main configuration and for all repositories,
+      therefore ``--uploaded-prior-to=0`` (or ``P0D``) disables the cooldown even for
+      repositories that configure it.
+    | :ref:`See <uploaded_prior_to_options-label>` :manpage:`dnf5.conf(5)` for more info.
+
+
 ``--setvar=VAR_NAME=VALUE``
     | Override a ``DNF5`` variable value, like ``arch``, ``releasever``, etc.
 

@@ -97,7 +97,7 @@ public:
     int get_nsolvables() const noexcept;
 
     /// Loads excluded and included package sets from the configuration.
-    /// Uses the `disable_excludes`, `excludepkgs`, and `includepkgs` configuration options for calculation.
+    /// Uses the `disable_excludes`, `excludepkgs`, `includepkgs`, and `uploaded_prior_to` configuration options for calculation.
     /// @param only_main If `true`, the repository specific configurations are not used.
     /// @since 5.0
     // TODO(mblaha): do we have a use case for only_main=true? Is the parameter needed?

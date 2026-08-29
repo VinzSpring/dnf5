@@ -312,6 +312,8 @@ public:
     const OptionNumber<std::uint32_t> & get_max_downloads_per_mirror_option() const;
     OptionSeconds & get_metadata_expire_option();
     const OptionSeconds & get_metadata_expire_option() const;
+    OptionSeconds & get_uploaded_prior_to_option();
+    const OptionSeconds & get_uploaded_prior_to_option() const;
     OptionString & get_sslcacert_option();
     const OptionString & get_sslcacert_option() const;
     OptionBool & get_sslverify_option();

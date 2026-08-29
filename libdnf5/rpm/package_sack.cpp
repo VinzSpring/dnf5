@@ -26,6 +26,9 @@
 
 #include "libdnf5/common/sack/query_cmp.hpp"
 #include "libdnf5/conf/const.hpp"
+#include "libdnf5/conf/option.hpp"
+#include "libdnf5/repo/repo.hpp"
+#include "libdnf5/repo/repo_query.hpp"
 #include "libdnf5/rpm/package_query.hpp"
 #include "libdnf5/rpm/versionlock_config.hpp"
 
@@ -43,9 +46,32 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <ctime>
+#include <utility>
 
 
 using LibsolvRepo = Repo;
+
+namespace {
+
+void exclude_uploaded_after(
+    libdnf5::rpm::PackageSet & excludes,
+    bool & excludes_exist,
+    libdnf5::rpm::PackageQuery & repo_pkgs,
+    std::time_t cutoff) {
+    for (const auto & pkg : repo_pkgs) {
+        const auto buildtime = pkg.get_build_time();
+        if (buildtime == 0) {
+            continue;
+        }
+        if (std::cmp_greater_equal(buildtime, cutoff)) {
+            excludes.add(pkg);
+            excludes_exist = true;
+        }
+    }
+}
+
+}  // namespace
 
 namespace libdnf5::rpm {
 
@@ -156,8 +182,12 @@ void PackageSack::Impl::load_config_excludes_includes(bool only_main) {
     const auto & disable_excludes = main_config.get_disable_excludes_option().get_value();
 
     if (std::find(disable_excludes.begin(), disable_excludes.end(), "*") != disable_excludes.end()) {
+        config_excludes.reset();
+        config_includes.reset();
         return;
     }
+
+    const auto now = std::time(nullptr);
 
     PackageSet includes(base);
     PackageSet excludes(base);
@@ -205,6 +235,26 @@ void PackageSack::Impl::load_config_excludes_includes(bool only_main) {
                     excludes_exist = true;
                 }
             }
+
+            if (repo->get_type() == libdnf5::repo::Repo::Type::AVAILABLE) {
+                const auto & uploaded_prior_to = repo->get_config().get_uploaded_prior_to_option();
+                const bool inherited_from_main = uploaded_prior_to.get_priority() == libdnf5::Option::Priority::EMPTY;
+                const bool main_disabled =
+                    std::find(disable_excludes.begin(), disable_excludes.end(), "main") != disable_excludes.end();
+                if (!(inherited_from_main && main_disabled)) {
+                    const auto age = uploaded_prior_to.get_value();
+                    if (age > 0) {
+                        exclude_uploaded_after(excludes, excludes_exist, query_repo_pkgs, now - age);
+                    }
+                }
+            }
+        }
+    } else if (std::find(disable_excludes.begin(), disable_excludes.end(), "main") == disable_excludes.end()) {
+        const auto age = main_config.get_uploaded_prior_to_option().get_value();
+        if (age > 0) {
+            PackageQuery available(base, PackageQuery::ExcludeFlags::IGNORE_EXCLUDES);
+            available.filter_available();
+            exclude_uploaded_after(excludes, excludes_exist, available, now - age);
         }
     }
 
@@ -250,6 +300,8 @@ void PackageSack::Impl::load_config_excludes_includes(bool only_main) {
     if (excludes_exist) {
         config_excludes.reset(new libdnf5::solv::SolvMap(0));
         *config_excludes = *excludes.p_impl;
+    } else {
+        config_excludes.reset();
     }
 
     load_versionlock_excludes();

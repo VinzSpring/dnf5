@@ -84,7 +84,7 @@ public:
 
     /// Sets excluded and included packages according to the configuration.
     ///
-    /// Uses the `disable_excludes`, `excludepkgs`, and `includepkgs` configuration options to calculate the `config_includes` and `config_excludes` sets.
+    /// Uses the `disable_excludes`, `excludepkgs`, `includepkgs`, and `uploaded_prior_to` configuration options to calculate the `config_includes` and `config_excludes` sets.
     ///
     /// Invalidates the Pool's considered map, sets `considered_uptodate` to `false` to mark it needs to be recomputed.
     /// @param only_main If `true`, only `excludepkgs` and `includepkgs` from the main config are recomputed.

@@ -21,6 +21,110 @@
 
 #include "libdnf5/utils/bgettext/bgettext-mark-domain.h"
 
+#include <cctype>
+#include <limits>
+
+namespace {
+
+constexpr double SECONDS_IN_MINUTE = 60;
+constexpr double SECONDS_IN_HOUR = 60 * SECONDS_IN_MINUTE;
+constexpr double SECONDS_IN_DAY = 24 * SECONDS_IN_HOUR;
+constexpr double SECONDS_IN_WEEK = 7 * SECONDS_IN_DAY;
+
+double iso8601_duration_to_seconds(const std::string & value) {
+    double seconds = 0;
+    bool in_time_part = false;
+    bool any_component = false;
+
+    for (std::size_t pos = 1; pos < value.length();) {
+        if (value[pos] == 'T' || value[pos] == 't') {
+            if (in_time_part) {
+                throw libdnf5::OptionInvalidValueError(
+                    M_("Invalid ISO 8601 duration \"{}\", duplicate time part separator \"T\""), value);
+            }
+            in_time_part = true;
+            ++pos;
+            continue;
+        }
+
+        double number;
+        std::size_t idx;
+        try {
+            number = std::stod(value.substr(pos), &idx);
+        } catch (...) {
+            throw libdnf5::OptionInvalidValueError(M_("Invalid ISO 8601 duration \"{}\""), value);
+        }
+        if (number < 0) {
+            throw libdnf5::OptionInvalidValueError(
+                M_("Invalid ISO 8601 duration \"{}\", negative values not allowed"), value);
+        }
+        pos += idx;
+        if (pos >= value.length()) {
+            throw libdnf5::OptionInvalidValueError(
+                M_("Invalid ISO 8601 duration \"{}\", missing unit designator"), value);
+        }
+
+        const char designator = static_cast<char>(std::toupper(static_cast<unsigned char>(value[pos++])));
+        switch (designator) {
+            case 'W':
+            case 'D':
+                if (in_time_part) {
+                    throw libdnf5::OptionInvalidValueError(
+                        M_("Invalid ISO 8601 duration \"{}\", date unit '{}' used in the time part"),
+                        value,
+                        std::string(1, designator));
+                }
+                seconds += number * (designator == 'W' ? SECONDS_IN_WEEK : SECONDS_IN_DAY);
+                break;
+            case 'H':
+            case 'S':
+                if (!in_time_part) {
+                    throw libdnf5::OptionInvalidValueError(
+                        M_("Invalid ISO 8601 duration \"{}\", time unit '{}' used before the \"T\" separator"),
+                        value,
+                        std::string(1, designator));
+                }
+                seconds += number * (designator == 'H' ? SECONDS_IN_HOUR : 1);
+                break;
+            case 'M':
+                if (!in_time_part) {
+                    throw libdnf5::OptionInvalidValueError(
+                        M_("Invalid ISO 8601 duration \"{}\", months and years are not supported, "
+                           "use weeks or days instead"),
+                        value);
+                }
+                seconds += number * SECONDS_IN_MINUTE;
+                break;
+            case 'Y':
+                throw libdnf5::OptionInvalidValueError(
+                    M_("Invalid ISO 8601 duration \"{}\", months and years are not supported, "
+                       "use weeks or days instead"),
+                    value);
+            default:
+                throw libdnf5::OptionInvalidValueError(
+                    M_("Invalid ISO 8601 duration \"{}\", unknown unit designator '{}'"),
+                    value,
+                    std::string(1, value[pos - 1]));
+        }
+        any_component = true;
+    }
+
+    if (!any_component) {
+        throw libdnf5::OptionInvalidValueError(M_("Invalid ISO 8601 duration \"{}\", no time component"), value);
+    }
+
+    return seconds;
+}
+
+libdnf5::OptionSeconds::ValueType to_value_type(double seconds, const std::string & value) {
+    if (seconds > static_cast<double>(std::numeric_limits<libdnf5::OptionSeconds::ValueType>::max())) {
+        throw libdnf5::OptionInvalidValueError(M_("Time option value \"{}\" is too large"), value);
+    }
+    return static_cast<libdnf5::OptionSeconds::ValueType>(seconds);
+}
+
+}  // namespace
+
 namespace libdnf5 {
 
 OptionSeconds::OptionSeconds(ValueType default_value, ValueType min, ValueType max)
@@ -31,15 +135,16 @@ OptionSeconds::OptionSeconds(ValueType default_value, ValueType min) : OptionNum
 OptionSeconds::OptionSeconds(ValueType default_value) : OptionNumber(default_value, -1) {}
 
 OptionSeconds::ValueType OptionSeconds::from_string(const std::string & value) const {
-    constexpr int seconds_in_minute = 60;
-    constexpr int minutes_in_hour = 60;
-    constexpr int hours_in_day = 24;
     if (value.empty()) {
         throw OptionInvalidValueError(M_("Empty time option value"));
     }
 
     if (value == "-1" || value == "never") {  // Special cache timeout, meaning never
         return -1;
+    }
+
+    if (value.front() == 'P' || value.front() == 'p') {
+        return to_value_type(iso8601_duration_to_seconds(value), value);
     }
 
     std::size_t idx;
@@ -64,22 +169,26 @@ OptionSeconds::ValueType OptionSeconds::from_string(const std::string & value) c
                 break;
             case 'm':
             case 'M':
-                res *= seconds_in_minute;
+                res *= SECONDS_IN_MINUTE;
                 break;
             case 'h':
             case 'H':
-                res *= seconds_in_minute * minutes_in_hour;
+                res *= SECONDS_IN_HOUR;
                 break;
             case 'd':
             case 'D':
-                res *= seconds_in_minute * minutes_in_hour * hours_in_day;
+                res *= SECONDS_IN_DAY;
+                break;
+            case 'w':
+            case 'W':
+                res *= SECONDS_IN_WEEK;
                 break;
             default:
                 throw OptionInvalidValueError(M_("Unknown time unit '{}'"), std::string(&value.back(), 1));
         }
     }
 
-    return static_cast<ValueType>(res);
+    return to_value_type(res, value);
 }
 
 void OptionSeconds::set(Priority priority, const std::string & value) {

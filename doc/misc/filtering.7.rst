@@ -34,7 +34,7 @@ There are several ways a package can be filtered out:
 Global excludes filtering
 =========================
 
-Exclude filtering can be adjusted using the ``includepkgs`` or ``excludepkgs`` configuration options in the DNF5 configuration file. To disable excludes, you can use the ``disable_excludes`` configuration option:
+Exclude filtering can be adjusted using the ``includepkgs`` or ``excludepkgs`` configuration options in the DNF5 configuration file. Packages that were built less than :ref:`uploaded_prior_to <uploaded_prior_to_options-label>` ago are excluded the same way. To disable excludes, you can use the ``disable_excludes`` configuration option:
 
 ``dnf5 --setopt=disable_excludes=* install bash``
 

@@ -115,6 +115,8 @@ public:
     const OptionChild<OptionNumber<std::uint32_t>> & get_max_downloads_per_mirror_option() const;
     OptionChild<OptionSeconds> & get_metadata_expire_option();
     const OptionChild<OptionSeconds> & get_metadata_expire_option() const;
+    OptionChild<OptionSeconds> & get_uploaded_prior_to_option();
+    const OptionChild<OptionSeconds> & get_uploaded_prior_to_option() const;
     OptionNumber<std::int32_t> & get_cost_option();
     const OptionNumber<std::int32_t> & get_cost_option() const;
     OptionNumber<std::int32_t> & get_priority_option();

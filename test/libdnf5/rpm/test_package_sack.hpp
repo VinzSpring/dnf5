@@ -39,6 +39,8 @@ class RpmPackageSackTest : public BaseTestCase {
     CPPUNIT_TEST(test_add_user_includes);
     CPPUNIT_TEST(test_remove_user_includes);
 
+    CPPUNIT_TEST(test_uploaded_prior_to_excludes);
+
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -51,6 +53,8 @@ public:
     void test_set_user_includes();
     void test_add_user_includes();
     void test_remove_user_includes();
+
+    void test_uploaded_prior_to_excludes();
 
 private:
     std::unique_ptr<libdnf5::rpm::PackageSet> pkgset;

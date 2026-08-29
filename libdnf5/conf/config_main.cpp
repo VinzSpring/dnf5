@@ -299,6 +299,7 @@ class ConfigMain::Impl {
     OptionNumber<std::uint32_t> max_parallel_downloads{3, 1};
     OptionNumber<std::uint32_t> max_downloads_per_mirror{3, 1};
     OptionSeconds metadata_expire{60 * 60 * 48};
+    OptionSeconds uploaded_prior_to{0, 0};
     OptionString sslcacert{""};
     OptionBool sslverify{true};
     OptionString sslclientcert{""};
@@ -472,6 +473,7 @@ ConfigMain::Impl::Impl(Config & owner) : owner(owner) {
     owner.opt_binds().add("max_parallel_downloads", max_parallel_downloads);
     owner.opt_binds().add("max_downloads_per_mirror", max_downloads_per_mirror);
     owner.opt_binds().add("metadata_expire", metadata_expire);
+    owner.opt_binds().add("uploaded_prior_to", uploaded_prior_to);
     owner.opt_binds().add("sslcacert", sslcacert);
     owner.opt_binds().add("sslverify", sslverify);
     owner.opt_binds().add("sslclientcert", sslclientcert);
@@ -1314,6 +1316,13 @@ const OptionSeconds & ConfigMain::get_metadata_expire_option() const {
     return p_impl->metadata_expire;
 }
 
+OptionSeconds & ConfigMain::get_uploaded_prior_to_option() {
+    return p_impl->uploaded_prior_to;
+}
+const OptionSeconds & ConfigMain::get_uploaded_prior_to_option() const {
+    return p_impl->uploaded_prior_to;
+}
+
 OptionString & ConfigMain::get_sslcacert_option() {
     return p_impl->sslcacert;
 }
@@ -1566,6 +1575,7 @@ void ConfigMain::Impl::load_from_config(const ConfigMain::Impl & other) {
     load_option(max_parallel_downloads, other.max_parallel_downloads);
     load_option(max_downloads_per_mirror, other.max_downloads_per_mirror);
     load_option(metadata_expire, other.metadata_expire);
+    load_option(uploaded_prior_to, other.uploaded_prior_to);
     load_option(sslcacert, other.sslcacert);
     load_option(sslverify, other.sslverify);
     load_option(sslclientcert, other.sslclientcert);

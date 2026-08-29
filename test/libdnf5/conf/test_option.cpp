@@ -263,6 +263,22 @@ void OptionTest::test_options_seconds() {
     option2.set(Option::Priority::RUNTIME, "5D");
     CPPUNIT_ASSERT_EQUAL(5 * 60 * 60 * 24, option2.get_value());
 
+    option2.set(Option::Priority::RUNTIME, "5w");
+    CPPUNIT_ASSERT_EQUAL(5 * 60 * 60 * 24 * 7, option2.get_value());
+    option2.set(Option::Priority::RUNTIME, "5W");
+    CPPUNIT_ASSERT_EQUAL(5 * 60 * 60 * 24 * 7, option2.get_value());
+
+    option2.set(Option::Priority::RUNTIME, "P7D");
+    CPPUNIT_ASSERT_EQUAL(7 * 60 * 60 * 24, option2.get_value());
+    option2.set(Option::Priority::RUNTIME, "P2W");
+    CPPUNIT_ASSERT_EQUAL(14 * 60 * 60 * 24, option2.get_value());
+    option2.set(Option::Priority::RUNTIME, "PT36H");
+    CPPUNIT_ASSERT_EQUAL(36 * 60 * 60, option2.get_value());
+    option2.set(Option::Priority::RUNTIME, "PT90S");
+    CPPUNIT_ASSERT_EQUAL(90, option2.get_value());
+    option2.set(Option::Priority::RUNTIME, "P1DT12H30M");
+    CPPUNIT_ASSERT_EQUAL(24 * 60 * 60 + 12 * 60 * 60 + 30 * 60, option2.get_value());
+
     option2.set(Option::Priority::RUNTIME, "never");
     CPPUNIT_ASSERT_EQUAL(NEVER, option2.get_value());
     option2.set(Option::Priority::RUNTIME, NEVER);
@@ -272,6 +288,14 @@ void OptionTest::test_options_seconds() {
     CPPUNIT_ASSERT_THROW(option2.set(Option::Priority::RUNTIME, "-2"), OptionInvalidValueError);
     CPPUNIT_ASSERT_THROW(option2.set(Option::Priority::RUNTIME, ""), OptionInvalidValueError);
     CPPUNIT_ASSERT_THROW(option2.set(Option::Priority::RUNTIME, "5g"), OptionInvalidValueError);
+    CPPUNIT_ASSERT_THROW(option2.set(Option::Priority::RUNTIME, "P1M"), OptionInvalidValueError);
+    CPPUNIT_ASSERT_THROW(option2.set(Option::Priority::RUNTIME, "P1Y"), OptionInvalidValueError);
+    CPPUNIT_ASSERT_THROW(option2.set(Option::Priority::RUNTIME, "P"), OptionInvalidValueError);
+    CPPUNIT_ASSERT_THROW(option2.set(Option::Priority::RUNTIME, "P7"), OptionInvalidValueError);
+    CPPUNIT_ASSERT_THROW(option2.set(Option::Priority::RUNTIME, "P7X"), OptionInvalidValueError);
+    CPPUNIT_ASSERT_THROW(option2.set(Option::Priority::RUNTIME, "P7H"), OptionInvalidValueError);
+    CPPUNIT_ASSERT_THROW(option2.set(Option::Priority::RUNTIME, "PT7D"), OptionInvalidValueError);
+    CPPUNIT_ASSERT_THROW(option2.set(Option::Priority::RUNTIME, "P99999999999D"), OptionInvalidValueError);
 }
 
 void OptionTest::test_options_string() {

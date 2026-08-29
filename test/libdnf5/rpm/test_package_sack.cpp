@@ -22,10 +22,14 @@
 
 #include "../shared/utils.hpp"
 
+#include <libdnf5/repo/repo_query.hpp>
+#include <libdnf5/rpm/package_query.hpp>
 #include <libdnf5/rpm/package_sack.hpp>
 #include <libdnf5/rpm/package_set.hpp>
 
+#include <cstdint>
 #include <filesystem>
+#include <limits>
 #include <set>
 #include <vector>
 
@@ -122,4 +126,47 @@ void RpmPackageSackTest::test_remove_user_includes() {
     CPPUNIT_ASSERT(sack->get_user_includes().contains(*pkg0) == true);
     sack->remove_user_includes(*pkgset);
     CPPUNIT_ASSERT(sack->get_user_includes().contains(*pkg0) == false);
+}
+
+
+void RpmPackageSackTest::test_uploaded_prior_to_excludes() {
+    // solv-24pkgs has no baseurl; repomd-repo1 is the data with build times
+    libdnf5::repo::RepoQuery fixture_repos(base);
+    fixture_repos.filter_id("solv-24pkgs");
+    for (const auto & fixture_repo : fixture_repos) {
+        fixture_repo->disable();
+    }
+
+    auto repo = add_repo_repomd("repomd-repo1");
+
+    auto & uploaded_prior_to = base.get_config().get_uploaded_prior_to_option();
+
+    const auto repo_pkgs_count = [this](libdnf5::sack::ExcludeFlags flags) {
+        PackageQuery query(base, flags);
+        query.filter_repo_id("repomd-repo1");
+        return query.size();
+    };
+
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(3), repo_pkgs_count(libdnf5::sack::ExcludeFlags::APPLY_EXCLUDES));
+
+    uploaded_prior_to.set("P7D");
+    sack->load_config_excludes_includes();
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(3), repo_pkgs_count(libdnf5::sack::ExcludeFlags::APPLY_EXCLUDES));
+
+    uploaded_prior_to.set(std::numeric_limits<int32_t>::max());
+    sack->load_config_excludes_includes();
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(0), repo_pkgs_count(libdnf5::sack::ExcludeFlags::APPLY_EXCLUDES));
+
+    CPPUNIT_ASSERT_EQUAL(
+        static_cast<size_t>(3), repo_pkgs_count(libdnf5::sack::ExcludeFlags::IGNORE_REGULAR_CONFIG_EXCLUDES));
+
+    base.get_config().get_disable_excludes_option().set("*");
+    sack->load_config_excludes_includes();
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(3), repo_pkgs_count(libdnf5::sack::ExcludeFlags::APPLY_EXCLUDES));
+    base.get_config().get_disable_excludes_option().set(std::vector<std::string>{});
+
+    uploaded_prior_to.set(std::numeric_limits<int32_t>::max());
+    repo->get_config().get_uploaded_prior_to_option().set("0");
+    sack->load_config_excludes_includes();
+    CPPUNIT_ASSERT_EQUAL(static_cast<size_t>(3), repo_pkgs_count(libdnf5::sack::ExcludeFlags::APPLY_EXCLUDES));
 }

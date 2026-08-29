@@ -387,6 +387,26 @@ void RootCommand::set_argument_parser() {
         global_options_group->register_argument(exclude);
     }
 
+    {
+        auto uploaded_prior_to = parser.add_new_named_arg("uploaded-prior-to");
+        uploaded_prior_to->set_long_name("uploaded-prior-to");
+        uploaded_prior_to->set_description(
+            _("Ignore packages built less than DURATION ago, e.g. \"7d\" or \"P7D\". Use \"0\" to disable."));
+        uploaded_prior_to->set_has_value(true);
+        uploaded_prior_to->set_arg_value_help("DURATION");
+        uploaded_prior_to->set_parse_hook_func(
+            [&ctx](
+                [[maybe_unused]] ArgumentParser::NamedArg * arg,
+                [[maybe_unused]] const char * option,
+                const char * value) {
+                auto & conf = ctx.get_base().get_config();
+                conf.opt_binds().at("uploaded_prior_to").new_string(libdnf5::Option::Priority::COMMANDLINE, value);
+                ctx.get_setopts().emplace_back("*.uploaded_prior_to", value);
+                return true;
+            });
+        global_options_group->register_argument(uploaded_prior_to);
+    }
+
     auto enable_repo_ids = parser.add_new_named_arg("enable-repo");
     enable_repo_ids->set_long_name("enable-repo");
     enable_repo_ids->set_has_value(true);
